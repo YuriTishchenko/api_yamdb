@@ -1,31 +1,72 @@
 from django.db import models
 
+from validators import validate_year
+
 
 class Categories(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True)
+    """Модель для категорий."""
+    name = models.CharField(
+        verbose_name='название',
+        max_length=256
+    )
+    slug = models.SlugField(
+        verbose_name='slug',
+        max_length=50,
+        unique=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
 
 
 class Genres(models.Model):
-    name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True)
+    """Модель для жанров."""
+    name = models.CharField(
+        verbose_name='название',
+        max_length=256
+    )
+    slug = models.SlugField(
+        verbose_name='slug',
+        max_length=50,
+        unique=True
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
 
 
 class Titles(models.Model):
-    name = models.CharField(max_length=256)
-    year = models.IntegerField()
-    description = models.TextField()
-    genre = models.ForeignKey(
-        Genres
+    """Модель для произведений."""
+    name = models.CharField(
+        verbose_name='название',
+        max_length=256
+    )
+    year = models.IntegerField(
+        verbose_name='год выпуска',
+        validators=[
+            validate_year
+        ]
+    )
+    description = models.TextField(
+        verbose_name='описание',
+        null=True,
+        blank=True
+    )
+    genre = models.ManyToManyField(
+        Genres,
+        verbose_name='жанр',
     )
     category = models.ForeignKey(
-        Categories
+        Categories,
+        verbose_name='категория',
+        on_delete=models.SET_NULL,
     )
 
-
-class Reviews(models.Model):
-    pass
-
-
-class Comments(models.Model):
-    pass
+    def __str__(self):
+        return self.name
