@@ -1,0 +1,1 @@
+NUMBER_OF_CHARS: int = 15
