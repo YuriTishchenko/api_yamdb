@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from reviews.models import Categorie, Comment, Genre, Review, Title, User
 
 
@@ -8,7 +7,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Categorie
         exclude = ('id',)
-        lookup_field = 'name'
+        lookup_field = 'slug'
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -16,7 +15,7 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         exclude = ('id',)
-        lookup_field = 'name'
+        lookup_field = 'slug'
 
 
 class TitleSerializer(serializers.ModelSerializer):
