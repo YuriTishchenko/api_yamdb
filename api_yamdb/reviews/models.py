@@ -22,7 +22,7 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
 
-class Categories(models.Model):
+class Categorie(models.Model):
     """Модель для категорий."""
     name = models.CharField(
         verbose_name='название',
@@ -41,7 +41,7 @@ class Categories(models.Model):
         ordering = ['name']
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     """Модель для жанров."""
     name = models.CharField(
         verbose_name='название',
@@ -60,7 +60,7 @@ class Genres(models.Model):
         ordering = ['name']
 
 
-class Titles(models.Model):
+class Title(models.Model):
     """Модель для произведений."""
     name = models.CharField(
         verbose_name='название',
@@ -78,20 +78,21 @@ class Titles(models.Model):
         blank=True
     )
     genre = models.ManyToManyField(
-        Genres,
+        Genre,
         verbose_name='жанр',
     )
     category = models.ForeignKey(
-        Categories,
+        Categorie,
         verbose_name='категория',
         on_delete=models.SET_NULL,
+        null=True
     )
 
     def __str__(self):
         return self.name
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     """Модель отзывов."""
     text = models.TextField('текст отзыва')
     author = models.ForeignKey(
@@ -101,7 +102,7 @@ class Reviews(models.Model):
         verbose_name='автор'
     )
     title = models.ForeignKey(
-        Titles,
+        Title,
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='произведение'
@@ -125,10 +126,10 @@ class Reviews(models.Model):
         return self.text[NUMBER_OF_CHARS]
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     """Модель комментариев."""
     reviews = models.ForeignKey(
-        Reviews,
+        Review,
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='комментируемый отзыв'
