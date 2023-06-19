@@ -6,6 +6,22 @@ from reviews.constants import NUMBER_OF_CHARS
 from validators import validate_year
 
 
+class User(AbstractUser):
+    """Модель класса User унаследованная от AbstractUser"""
+    bio = models.TextField(
+        verbose_name='Биография',
+        blank=True,
+    )
+    role = models.CharField(
+        max_length=40,
+        verbose_name='Роль',
+    )
+
+    class Meta:
+        verbose_name = 'Позьзователь'
+        verbose_name_plural = 'Пользователи'
+
+
 class Categories(models.Model):
     """Модель для категорий."""
     name = models.CharField(
@@ -85,7 +101,7 @@ class Reviews(models.Model):
         verbose_name='автор'
     )
     title = models.ForeignKey(
-        Title,
+        Titles,
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='произведение'
@@ -131,18 +147,3 @@ class Comments(models.Model):
 
     def __str__(self):
         return self.text[NUMBER_OF_CHARS]
-
-class User(AbstractUser):
-    """Модель класса User унаследованная от AbstractUser"""
-    bio = models.TextField(
-        verbose_name='Биография',
-        blank=True,
-    )
-    role = models.CharField(
-        max_length=40,
-        verbose_name='Роль',
-    )
-
-    class Meta:
-        verbose_name = 'Позьзователь'
-        verbose_name_plural = 'Пользователи'
