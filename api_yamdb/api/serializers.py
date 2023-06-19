@@ -12,3 +12,13 @@ class CategorySerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'url': {'lookup_field': 'slug'}
         }
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genres
+        exclude = ('id',)
+        lookup_field = 'slug'
+        extra_kwargs = {
+            'url': {'lookup_field': 'slug'}
+        }
