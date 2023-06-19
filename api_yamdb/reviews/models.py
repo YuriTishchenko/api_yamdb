@@ -3,7 +3,23 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from reviews.constants import NUMBER_OF_CHARS
-from validators import validate_year
+from reviews.validators import validate_year
+
+
+class User(AbstractUser):
+    """Модель класса User унаследованная от AbstractUser"""
+    bio = models.TextField(
+        verbose_name='Биография',
+        blank=True,
+    )
+    role = models.CharField(
+        max_length=40,
+        verbose_name='Роль',
+    )
+
+    class Meta:
+        verbose_name = 'Позьзователь'
+        verbose_name_plural = 'Пользователи'
 
 
 class Categories(models.Model):
@@ -69,13 +85,14 @@ class Titles(models.Model):
         Categories,
         verbose_name='категория',
         on_delete=models.SET_NULL,
+        null=True
     )
 
     def __str__(self):
         return self.name
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     """Модель отзывов."""
     text = models.TextField('текст отзыва')
     author = models.ForeignKey(
@@ -85,7 +102,7 @@ class Reviews(models.Model):
         verbose_name='автор'
     )
     title = models.ForeignKey(
-        Title,
+        Titles,
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='произведение'
@@ -109,10 +126,10 @@ class Reviews(models.Model):
         return self.text[NUMBER_OF_CHARS]
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     """Модель комментариев."""
     reviews = models.ForeignKey(
-        Reviews,
+        Review,
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='комментируемый отзыв'
@@ -131,18 +148,3 @@ class Comments(models.Model):
 
     def __str__(self):
         return self.text[NUMBER_OF_CHARS]
-
-class User(AbstractUser):
-    """Модель класса User унаследованная от AbstractUser"""
-    bio = models.TextField(
-        verbose_name='Биография',
-        blank=True,
-    )
-    role = models.CharField(
-        max_length=40,
-        verbose_name='Роль',
-    )
-
-    class Meta:
-        verbose_name = 'Позьзователь'
-        verbose_name_plural = 'Пользователи'

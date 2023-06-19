@@ -7,6 +7,7 @@ app_name = 'api'
 
 router_v1 = DefaultRouter()
 
+
 router_v1.register(
     r'titles/(?P<title_id>[\d]+)/reviews', ReviewViewSet, basename='review'
 )
