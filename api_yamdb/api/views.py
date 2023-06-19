@@ -9,6 +9,22 @@ class UserViewSet(viewsets.ModelViewSet):
     pass
 
 
+class CommentViewSet(viewsets.ModelViewSet):
+    pass
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    pass
+
+
+def signup():
+    pass
+
+
+def token():
+    pass
+  
+  
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
 
