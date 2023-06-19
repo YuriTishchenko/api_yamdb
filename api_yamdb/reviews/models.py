@@ -2,8 +2,26 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from reviews.constants import NUMBER_OF_CHARS
-from validators import validate_year
+from reviews.constants import NUMBER_OF_CHARS, ROLES
+from reviews.validators import validate_year
+
+
+class User(AbstractUser):
+    """Модель класса User унаследованная от AbstractUser"""
+    bio = models.TextField(
+        verbose_name='Биография',
+        blank=True,
+    )
+    role = models.CharField(
+        max_length=40,
+        verbose_name='Роль',
+        choices=ROLES,
+        default='user',
+    )
+
+    class Meta:
+        verbose_name = 'Позьзователь'
+        verbose_name_plural = 'Пользователи'
 
 
 class Categories(models.Model):
@@ -45,6 +63,7 @@ class Genres(models.Model):
 
 
 class Titles(models.Model):
+    pass
     """Модель для произведений."""
     name = models.CharField(
         verbose_name='название',
@@ -85,7 +104,7 @@ class Reviews(models.Model):
         verbose_name='автор'
     )
     title = models.ForeignKey(
-        Title,
+        Titles,
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='произведение'
@@ -131,18 +150,3 @@ class Comments(models.Model):
 
     def __str__(self):
         return self.text[NUMBER_OF_CHARS]
-
-class User(AbstractUser):
-    """Модель класса User унаследованная от AbstractUser"""
-    bio = models.TextField(
-        verbose_name='Биография',
-        blank=True,
-    )
-    role = models.CharField(
-        max_length=40,
-        verbose_name='Роль',
-    )
-
-    class Meta:
-        verbose_name = 'Позьзователь'
-        verbose_name_plural = 'Пользователи'
