@@ -5,7 +5,6 @@ from rest_framework.validators import UniqueTogetherValidator
 from reviews.models import Categorie, Comment, Genre, Review, Title, User
 
 
-
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
