@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from reviews.constants import NUMBER_OF_CHARS
+
+from reviews.constants import NUMBER_OF_CHARS, ROLES
 from reviews.validators import validate_year
 
 
@@ -14,6 +15,8 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=40,
         verbose_name='Роль',
+        choices=ROLES,
+        default='user',
     )
 
     class Meta:
@@ -101,7 +104,7 @@ class Review(models.Model):
         verbose_name='автор'
     )
     title = models.ForeignKey(
-        Title,
+        Titles,
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='произведение'
