@@ -4,7 +4,7 @@ from reviews.models import Categorie, Genre, Title
 
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
-from reviews.models import Review, Titles
+from reviews.models import Review, Title
 from api.serializers import (
   CategorySerializer, CommentSerializer,GenreSerializer, ReviewSerializer, TitleSerializer
 )
