@@ -1,13 +1,12 @@
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             TitleSerializer)
 from django.shortcuts import get_object_or_404, render
 from rest_framework import filters, viewsets
-from reviews.models import Categorie, Genre, Title
+from reviews.models import Categorie, Genre, Review, Title
 
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
-from reviews.models import Review, Title
-from api.serializers import (
-  CategorySerializer, CommentSerializer,GenreSerializer, ReviewSerializer, TitleSerializer
-)
 
 
 class UserViewSet(viewsets.ModelViewSet):

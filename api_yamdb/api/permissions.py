@@ -1,5 +1,4 @@
 from rest_framework import permissions
-
 from reviews.constants import ADMIN, MODERATOR
 
 
