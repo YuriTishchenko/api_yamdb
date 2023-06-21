@@ -1,6 +1,3 @@
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             TitleSerializer)
 from django.shortcuts import get_object_or_404, render
 from rest_framework import filters, viewsets
 from reviews.models import Categorie, Genre, Review, Title
@@ -8,6 +5,14 @@ from reviews.models import Categorie, Genre, Review, Title
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
 from .permissions import IsAdminOrReadOnly
+from reviews.models import Review, Title
+from api.serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    ReviewSerializer,
+    TitleSerializer
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -46,13 +51,13 @@ class TitleViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
 
-  
+
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
         return self.get_title().reviews
-         
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, title=self.get_title())
 
