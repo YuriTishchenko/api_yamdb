@@ -1,19 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 
-from reviews.models import Review, Titles
+from api.permissions import IsUserOrModeratorOrReadOnly
 from api.serializers import CommentSerializer, ReviewSerializer
+from reviews.models import Review, Titles
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    pass
-
-
-class CommentViewSet(viewsets.ModelViewSet):
-    pass
-
-
-class ReviewViewSet(viewsets.ModelViewSet):
     pass
 
 
@@ -23,14 +16,15 @@ def signup():
 
 def token():
     pass
-  
-  
+
+
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    # permission_classes = (IsUserOrModeratorOrReadOnly,)
 
     def get_queryset(self):
         return self.get_title().reviews
-         
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, title=self.get_title())
 
