@@ -1,9 +1,17 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from django.shortcuts import get_object_or_404, render
+from rest_framework import filters, viewsets
 
-from api.permissions import IsUserOrModeratorOrReadOnly
-from api.serializers import CommentSerializer, ReviewSerializer
-from reviews.models import Review, Titles
+from reviews.models import Categorie, Genre, Review, Title
+from .filters import TitleFilter
+from .mixins import ListCreateDestroyViewSet
+from .permissions import IsAdminOrReadOnly, IsUserOrModeratorOrReadOnly
+from api.serializers import (
+    CategorySerializer,
+    CommentSerializer,
+    GenreSerializer,
+    ReviewSerializer,
+    TitleSerializer
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -18,9 +26,34 @@ def token():
     pass
 
 
+class CategoryViewSet(ListCreateDestroyViewSet):
+    queryset = Categorie.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class GenreViewSet(ListCreateDestroyViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    permission_classes = (IsAdminOrReadOnly,)
+    serializer_class = TitleSerializer
+    filterset_class = TitleFilter
+
+
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    # permission_classes = (IsUserOrModeratorOrReadOnly,)
+    permission_classes = (IsUserOrModeratorOrReadOnly,)
 
     def get_queryset(self):
         return self.get_title().reviews
@@ -29,7 +62,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, title=self.get_title())
 
     def get_title(self):
-        return get_object_or_404(Titles, id=self.kwargs.get('title_id'))
+        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
 
 
 class CommentViewSet(viewsets.ModelViewSet):

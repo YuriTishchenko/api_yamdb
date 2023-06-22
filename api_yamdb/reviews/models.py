@@ -24,7 +24,7 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
 
-class Categories(models.Model):
+class Categorie(models.Model):
     """Модель для категорий."""
     name = models.CharField(
         verbose_name='название',
@@ -43,7 +43,7 @@ class Categories(models.Model):
         ordering = ['name']
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     """Модель для жанров."""
     name = models.CharField(
         verbose_name='название',
@@ -62,8 +62,7 @@ class Genres(models.Model):
         ordering = ['name']
 
 
-class Titles(models.Model):
-    pass
+class Title(models.Model):
     """Модель для произведений."""
     name = models.CharField(
         verbose_name='название',
@@ -81,11 +80,11 @@ class Titles(models.Model):
         blank=True
     )
     genre = models.ManyToManyField(
-        Genres,
+        Genre,
         verbose_name='жанр',
     )
     category = models.ForeignKey(
-        Categories,
+        Categorie,
         verbose_name='категория',
         on_delete=models.SET_NULL,
         null=True
@@ -105,7 +104,7 @@ class Review(models.Model):
         verbose_name='автор'
     )
     title = models.ForeignKey(
-        Titles,
+        Title,
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='произведение'
