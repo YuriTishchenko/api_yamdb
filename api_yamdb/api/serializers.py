@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
+from reviews.models import Comment, Review
 
+from rest_framework.validators import UniqueTogetherValidator
 from reviews.models import Categorie, Comment, Genre, Review, Title, User
 
 
@@ -34,7 +35,8 @@ class TitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
+                  'category')
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -43,21 +45,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
-    title = serializers.PrimaryKeyRelatedField(
-        queryset=Title.objects.all(),
-        write_only=True,
-    )
-
+    
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date', 'title')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('author', 'title'),
-                message='Вы уже оставили отзыв на это произведение.'
-            )
-        ]
+        exclude = ('title',)
+
+    def validate(self, data):
+        if (
+            self.context['request'].method == 'PUT'
+            or self.context['request'].method == 'PATCH'
+        ):
+            return data
+        elif Review.objects.filter(
+            author=self.context['request'].user,
+            title=self.context['view'].kwargs['title_id']
+        ).exists():
+            raise serializers.ValidationError(
+                'Вы уже оставили отзыв на данное произведение')
+        return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
