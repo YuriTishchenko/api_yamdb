@@ -1,11 +1,10 @@
 from django.shortcuts import get_object_or_404, render
 from rest_framework import filters, viewsets
-from reviews.models import Categorie, Genre, Review, Title
 
+from reviews.models import Categorie, Genre, Review, Title
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
-from .permissions import IsAdminOrReadOnly
-from reviews.models import Review, Title
+from .permissions import IsAdminOrReadOnly, IsUserOrModeratorOrReadOnly
 from api.serializers import (
     CategorySerializer,
     CommentSerializer,
@@ -54,6 +53,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    permission_classes = (IsUserOrModeratorOrReadOnly,)
 
     def get_queryset(self):
         return self.get_title().reviews
