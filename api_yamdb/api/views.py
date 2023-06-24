@@ -1,29 +1,94 @@
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, viewsets
-from reviews.models import Categorie, Genre, Title
+from rest_framework import filters, viewsets, status
+from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import AccessToken
+from django.contrib.auth.tokens import default_token_generator
 
+
+from reviews.models import Categorie, Genre, Title
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
-from reviews.models import Review, Title
+from reviews.models import Review, Title, User
 from api.serializers import (
     CategorySerializer,
     CommentSerializer,
     GenreSerializer,
     ReviewSerializer,
-    TitleSerializer
+    TitleSerializer,
+    UserSerializer,
+    TokenSerializer,
+    SignUpSerializer
 )
+from api.permissions import IsAdmin
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    pass
+    """Вьюсет Юзера"""
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAdmin,)
+
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        url_path='me',
+        url_name='me',
+        permission_classes=(IsAuthenticated,)
+    )
+    def get_me(self, request):
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data,
+                partial=True, context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=request.user.role)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-def signup():
-    pass
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def signup(request):
+    serializer = SignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    username = serializer.validated_data.get("username")
+    email = serializer.validated_data.get("email")
+    user = User.objects.get_or_create(username=username, email=email)
+    confirmation_code = default_token_generator.make_token(user)
+    print(confirmation_code)
+    send_mail(
+        subject='регистрация в api_yandb',
+        message=f'confirmation_code: {confirmation_code}',
+        from_email='from@example.com',
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+    return Response(
+        {"confirmation_code": str(confirmation_code)},
+        status=status.HTTP_200_OK
+    )
 
 
-def token():
-    pass
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def token(request):
+    serializer = TokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(
+        User, username=serializer.validated_data.get("username")
+    )
+    if default_token_generator.check_token(
+        user, serializer.validated_data.get("confirmation_code")
+    ):
+        token = AccessToken.for_user(user)
+        return Response({"token": str(token)}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
