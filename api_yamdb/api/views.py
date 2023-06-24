@@ -1,8 +1,8 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, viewsets, status
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework import filters, viewsets, status, mixins
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
@@ -52,43 +52,55 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def signup(request):
-    serializer = SignUpSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get("username")
-    email = serializer.validated_data.get("email")
-    user = User.objects.get_or_create(username=username, email=email)
-    confirmation_code = default_token_generator.make_token(user)
-    print(confirmation_code)
-    send_mail(
-        subject='регистрация в api_yandb',
-        message=f'confirmation_code: {confirmation_code}',
-        from_email='from@example.com',
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
-    return Response(
-        {"confirmation_code": str(confirmation_code)},
-        status=status.HTTP_200_OK
-    )
+class SignUpViewSet(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Вьюсет для SignUp"""
+
+    queryset = User.objects.all()
+    serializer_class = SignUpSerializer
+    permission_classes = (AllowAny,)
+
+    def create(self, request):
+        serializer = SignUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get("username")
+        email = serializer.validated_data.get("email")
+        user, _ = User.objects.get_or_create(username=username, email=email)
+        confirmation_code = default_token_generator.make_token(user)
+        send_mail(
+            subject='регистрация в api_yandb',
+            message=f'confirmation_code: {confirmation_code}'
+                    f' for {user.username}',
+            from_email='from@example.com',
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def token(request):
-    serializer = TokenSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    user = get_object_or_404(
-        User, username=serializer.validated_data.get("username")
-    )
-    if default_token_generator.check_token(
-        user, serializer.validated_data.get("confirmation_code")
-    ):
-        token = AccessToken.for_user(user)
-        return Response({"token": str(token)}, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class TokenViewSet(
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
+    """Вьюсет для токенов"""
+
+    queryset = User.objects.all()
+    serializer_class = TokenSerializer
+    permission_classes = (AllowAny,)
+
+    def create(self, request):
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get('username')
+        confirmation_code = serializer.validated_data.get('confirmation_code')
+        user = get_object_or_404(User, username=username)
+        if not default_token_generator.check_token(user, confirmation_code):
+            message = {'confirmation_code': 'Неверный confirmation_code'}
+            return Response(message, status=status.HTTP_400_BAD_REQUEST)
+        message = {'token': str(AccessToken.for_user(user))}
+        return Response(message, status=status.HTTP_200_OK)
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
