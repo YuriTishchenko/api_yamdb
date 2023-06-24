@@ -73,3 +73,53 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор Юзера"""
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        )
+
+        def validate_username(self, username):
+            if username == 'me':
+                raise serializers.ValidationError(
+                    'Имя me зарезервировано системой'
+                )
+            return username
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания учетки"""
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+        def validate(self, data):
+            if data.get('username') == 'me':
+                raise serializers.ValidationError(
+                    'Имя me зарезервировано системой'
+                )
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    """Сериализатор для токена"""
+
+    username = serializers.RegexField(
+        regex=r'^[\w.@+-]+\z',
+        max_length=150,
+        required=True
+    )
+    confirmation_code = serializers.CharField(
+        max_length=150,
+        required=True
+    )
