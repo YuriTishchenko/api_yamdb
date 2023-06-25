@@ -89,6 +89,7 @@ class Title(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
+    rating = models.IntegerField(null=True)
 
     def __str__(self):
         return self.name
@@ -120,9 +121,12 @@ class Review(models.Model):
 
     class Meta:
         ordering = ['-pub_date']
-        models.UniqueConstraint(
-            fields=['author', 'title'], name='unique_review'
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique_review'
+            )
+        ]
 
     def __str__(self):
         return self.text[NUMBER_OF_CHARS]
