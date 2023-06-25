@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
 
-from reviews.models import Categorie, Genre, Title
+from reviews.models import Categorie, Genre, Review, Title
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
 from reviews.models import Categorie, Genre, Review, Title, User
@@ -136,7 +136,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = (IsUserOrModeratorOrReadOnly,)
 
     def get_queryset(self):
-        return self.get_title().reviews
+        return self.get_title().reviews.all()
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, title=self.get_title())
@@ -147,9 +147,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (IsUserOrModeratorOrReadOnly,)
 
     def get_queryset(self):
-        return self.get_review().comments
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, reviews=self.get_review())
