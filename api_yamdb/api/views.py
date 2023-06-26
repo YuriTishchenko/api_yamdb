@@ -77,6 +77,7 @@ class SignUpViewSet(
         username = serializer.validated_data.get("username")
         email = serializer.validated_data.get("email")
         user, _ = User.objects.get_or_create(username=username, email=email)
+        user = User.objects.get(username=username)
         confirmation_code = default_token_generator.make_token(user)
         send_mail(
             subject='регистрация в api_yandb',
