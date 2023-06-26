@@ -34,6 +34,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
+    lookup_field = 'username'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @action(
         detail=False,
@@ -42,16 +46,17 @@ class UserViewSet(viewsets.ModelViewSet):
         url_name='me',
         permission_classes=(IsAuthenticated,)
     )
-    def get_me(self, request):
+    def get_patch_me(self, request):
         if request.method == 'PATCH':
-            serializer = UserSerializer(
-                request.user, data=request.data,
-                partial=True, context={'request': request}
+            serializer = self.get_serializer(
+                request.user,
+                data=request.data,
+                partial=True,
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save
+            serializer.save(role=request.user.role)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer = UserSerializer(request.user)
+        serializer = self.get_serializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -64,9 +69,10 @@ class SignUpViewSet(
     queryset = User.objects.all()
     serializer_class = SignUpSerializer
     permission_classes = (AllowAny,)
+    authentication_classes = ([])
 
     def create(self, request):
-        serializer = SignUpSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data.get("username")
         email = serializer.validated_data.get("email")
@@ -92,9 +98,10 @@ class TokenViewSet(
     queryset = User.objects.all()
     serializer_class = TokenSerializer
     permission_classes = (AllowAny,)
+    authentication_classes = ([])
 
     def create(self, request):
-        serializer = TokenSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data.get('username')
         confirmation_code = serializer.validated_data.get('confirmation_code')

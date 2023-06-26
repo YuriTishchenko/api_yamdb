@@ -1,4 +1,5 @@
 from django.db.models import Avg
+import re
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -106,20 +107,31 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email')
+        fields = ('email', 'username')
 
-        def validate(self, data):
-            if data.get('username') == 'me':
+        def validate_username(self, value):
+            # if re.fullmatch(r'^[\w.@+-]+$', '1'):
+            #     raise serializers.ValidationError(
+            #         'Недопустимые символы в имени'
+            #     )
+            if value == 'me':
                 raise serializers.ValidationError(
                     'Имя me зарезервировано системой'
                 )
+            return value
+        
+        def validate(self, data):
+            if data['username'] == 'me':
+                raise serializers.ValidationError(
+                    'Имя me зарезервировано системой')
+            return data
+    
 
-
-class TokenSerializer(serializers.ModelSerializer):
+class TokenSerializer(serializers.Serializer):
     """Сериализатор для токена"""
 
     username = serializers.RegexField(
-        regex=r'^[\w.@+-]+\z',
+        regex=r'^[\w.@+-]+$',
         max_length=150,
         required=True
     )
