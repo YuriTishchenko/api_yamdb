@@ -1,8 +1,8 @@
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
-from reviews.models import Comment, Review
 
-from rest_framework.validators import UniqueTogetherValidator
+from reviews.models import Comment, Review
 from reviews.models import Categorie, Comment, Genre, Review, Title, User
 
 
@@ -23,7 +23,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genere = serializers.SlugRelatedField(
+    genre = serializers.SlugRelatedField(
         slug_field='slug',
         many=True,
         queryset=Genre.objects.all()
@@ -32,11 +32,30 @@ class TitleSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Categorie.objects.all()
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
                   'category')
+
+    def get_rating(self, obj):
+        return obj.reviews.aggregate(Avg('score'))['score__avg']
+
+
+class ReadOnlyTitleSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(
+        source='reviews__score__avg',
+        read_only=True
+    )
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+
+    class Meta:
+        model = Title
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -45,7 +64,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
-    
+
     class Meta:
         model = Review
         exclude = ('title',)
