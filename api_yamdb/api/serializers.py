@@ -120,11 +120,11 @@ class SignUpSerializer(serializers.ModelSerializer):
                 )
             return value
         
-        def validate(self, data):
-            if data['username'] == 'me':
-                raise serializers.ValidationError(
-                    'Имя me зарезервировано системой')
-            return data
+    def validate(self, data):
+        if data['username'] == 'me':
+            raise serializers.ValidationError(
+                'Имя me зарезервировано системой')
+        return data
     
 
 class TokenSerializer(serializers.Serializer):
