@@ -1,5 +1,9 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator
+)
 from django.db import models
 
 from reviews.constants import NUMBER_OF_CHARS, ROLES
@@ -8,6 +12,18 @@ from reviews.validators import validate_year
 
 class User(AbstractUser):
     """Модель класса User унаследованная от AbstractUser"""
+
+    username = models.CharField(
+        max_length=150,
+        verbose_name='Имя',
+        unique=True,
+        validators=[RegexValidator(r'^[\w.@+-]+$')]
+    )
+    email = models.EmailField(
+        max_length=254,
+        verbose_name='email',
+        unique=True
+    )
     bio = models.TextField(
         verbose_name='Биография',
         blank=True,
@@ -22,6 +38,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Позьзователь'
         verbose_name_plural = 'Пользователи'
+        ordering = ['id']
 
 
 class Categorie(models.Model):
@@ -93,7 +110,7 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         ordering = ['name']
 

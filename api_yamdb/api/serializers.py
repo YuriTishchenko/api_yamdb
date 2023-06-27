@@ -1,4 +1,4 @@
-from django.db.models import Avg
+from django.db.models import Avg, Q
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -40,14 +40,13 @@ class TitleSerializer(serializers.ModelSerializer):
                   'category')
 
     def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score'))['score__avg']
+        rating = obj.reviews.aggregate(Avg('score'))['score__avg']
+        if rating is not None:
+            return round(rating)
 
 
 class ReadOnlyTitleSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(
-        source='reviews__score__avg',
-        read_only=True
-    )
+    rating = serializers.SerializerMethodField()
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
 
@@ -56,6 +55,10 @@ class ReadOnlyTitleSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
+
+    def get_rating(self, obj):
+        serializer = TitleSerializer(obj)
+        return serializer.data['rating']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -116,25 +119,46 @@ class UserSerializer(serializers.ModelSerializer):
             return username
 
 
-class SignUpSerializer(serializers.ModelSerializer):
+class SignUpSerializer(serializers.Serializer):
     """Сериализатор для создания учетки"""
 
-    class Meta:
-        model = User
-        fields = ('username', 'email')
+    email = serializers.EmailField(
+        max_length=254,
+        required=True,
+    )
 
-        def validate(self, data):
-            if data.get('username') == 'me':
-                raise serializers.ValidationError(
-                    'Имя me зарезервировано системой'
-                )
+    username = serializers.RegexField(
+        regex=r'^[\w.@+-]+$',
+        max_length=150,
+        required=True
+    )
+
+    def validate(self, data):
+        if data['username'] == 'me':
+            raise serializers.ValidationError(
+                'Имя me зарезервировано системой')
+        check_email = User.objects.filter(email=data.get('email'))
+        check_user = User.objects.filter(username=data.get('username'))
+        test_pair_of_user_and_mail = User.objects.filter(
+            Q(email=data.get('email')) & Q(username=data.get('username'))
+        )
+        if (check_email and not check_user):
+            raise serializers.ValidationError(
+                'Адрес электронной почты занят'
+            )
+
+        if check_user and not test_pair_of_user_and_mail:
+            raise serializers.ValidationError(
+                'Неверный адрес  электронной почты'
+            )
+        return data
 
 
-class TokenSerializer(serializers.ModelSerializer):
+class TokenSerializer(serializers.Serializer):
     """Сериализатор для токена"""
 
     username = serializers.RegexField(
-        regex=r'^[\w.@+-]+\z',
+        regex=r'^[\w.@+-]+$',
         max_length=150,
         required=True
     )
