@@ -32,15 +32,15 @@ router_v1.register(
     basename='users'
 )
 router_v1.register(
-    r'categories',
+    'categories',
     CategoryViewSet
 )
 router_v1.register(
-    r'genres',
+    'genres',
     GenreViewSet
 )
 router_v1.register(
-    r'titles',
+    'titles',
     TitleViewSet
 )
 

@@ -38,6 +38,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Позьзователь'
         verbose_name_plural = 'Пользователи'
+        ordering = ['id']
 
 
 class Categorie(models.Model):
