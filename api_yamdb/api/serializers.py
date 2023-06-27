@@ -40,14 +40,13 @@ class TitleSerializer(serializers.ModelSerializer):
                   'category')
 
     def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score'))['score__avg']
+        rating = obj.reviews.aggregate(Avg('score'))['score__avg']
+        if rating is not None:
+            return round(rating)
 
 
 class ReadOnlyTitleSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(
-        source='reviews__score__avg',
-        read_only=True
-    )
+    rating = serializers.SerializerMethodField()
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
 
@@ -56,6 +55,10 @@ class ReadOnlyTitleSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
+
+    def get_rating(self, obj):
+        serializer = TitleSerializer(obj)
+        return serializer.data['rating']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
