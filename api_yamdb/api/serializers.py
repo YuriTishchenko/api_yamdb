@@ -147,11 +147,10 @@ class SignUpSerializer(serializers.Serializer):
                 'Адрес электронной почты занят'
             )
 
-        if check_user:
-            if not test_pair_of_user_and_mail:
-                raise serializers.ValidationError(
-                    'Неверный адрес  электронной почты'
-                )
+        if check_user and not test_pair_of_user_and_mail:
+            raise serializers.ValidationError(
+                'Неверный адрес  электронной почты'
+            )
         return data
 
 
