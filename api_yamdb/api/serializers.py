@@ -1,4 +1,4 @@
-from django.db.models import Avg, Q
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -32,21 +32,15 @@ class TitleSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Categorie.objects.all()
     )
-    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
+        fields = ('id', 'name', 'year', 'description', 'genre',
                   'category')
-
-    def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score'))['score__avg']
-        if rating is not None:
-            return round(rating)
 
 
 class ReadOnlyTitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(read_only=True)
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
 
@@ -55,10 +49,6 @@ class ReadOnlyTitleSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
-
-    def get_rating(self, obj):
-        serializer = TitleSerializer(obj)
-        return serializer.data['rating']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -73,10 +63,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         exclude = ('title',)
 
     def validate(self, data):
-        if (
-            self.context['request'].method == 'PUT'
-            or self.context['request'].method == 'PATCH'
-        ):
+        if self.context['request'].method != 'POST':
             return data
         elif Review.objects.filter(
             author=self.context['request'].user,
