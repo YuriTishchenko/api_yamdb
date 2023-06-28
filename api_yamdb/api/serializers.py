@@ -52,9 +52,8 @@ class ReadOnlyTitleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = (
-            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
-        )
+        fields = '__all__'
+        read_only_fields = ('__all__',)
 
     def get_rating(self, obj):
         serializer = TitleSerializer(obj)
