@@ -5,7 +5,7 @@ from api.views import (
     ReviewViewSet,
     TitleViewSet,
     UserViewSet,
-    SignUpViewSet,
+    signup,
     TokenViewSet,
 )
 from django.urls import include, path
@@ -48,7 +48,7 @@ urlpatterns = [
     path('v1/', include(router_v1.urls)),
     path(
         'v1/auth/signup/',
-        SignUpViewSet.as_view({'post': 'create'}),
+        signup,
         name='signup'
     ),
     path(

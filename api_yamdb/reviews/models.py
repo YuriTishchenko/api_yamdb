@@ -6,7 +6,7 @@ from django.core.validators import (
 )
 from django.db import models
 
-from reviews.constants import NUMBER_OF_CHARS, ROLES
+from reviews.constants import ADMIN, NUMBER_OF_CHARS, MODERATOR, ROLES, USER
 from reviews.validators import validate_year
 
 
@@ -32,13 +32,21 @@ class User(AbstractUser):
         max_length=40,
         verbose_name='Роль',
         choices=ROLES,
-        default='user',
+        default=USER,
     )
 
     class Meta:
         verbose_name = 'Позьзователь'
         verbose_name_plural = 'Пользователи'
         ordering = ['id']
+
+    @property
+    def is_admin(self):
+        return self.role == ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == MODERATOR
 
 
 class Categorie(models.Model):
