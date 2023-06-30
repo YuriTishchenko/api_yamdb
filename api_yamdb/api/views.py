@@ -128,7 +128,9 @@ class GenreViewSet(ListCreateDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(rating=Avg('reviews__score')).order_by('name')
+    queryset = Title.objects.all().annotate(
+        rating=Avg('reviews__score')
+    ).order_by('name')
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
@@ -165,4 +167,8 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, reviews=self.get_review())
 
     def get_review(self):
-        return get_object_or_404(Review, id=self.kwargs.get('review_id'), title=self.kwargs.get('title_id'))
+        return get_object_or_404(
+            Review,
+            id=self.kwargs.get('review_id'),
+            title=self.kwargs.get('title_id')
+        )
