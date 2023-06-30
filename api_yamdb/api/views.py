@@ -1,18 +1,22 @@
+from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, mixins, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
 
+from api.permissions import (
+    IsAdmin,
+    IsAdminOrReadOnly,
+    IsUserOrModeratorOrReadOnly,
+)
 from reviews.models import Categorie, Genre, Review, Title
-from .filters import TitleFilter
-from .mixins import ListCreateDestroyViewSet
 from reviews.models import Categorie, Genre, Review, Title, User
 from api.serializers import (
     CategorySerializer,
@@ -25,11 +29,9 @@ from api.serializers import (
     ReadOnlyTitleSerializer,
     SignUpSerializer
 )
-from api.permissions import (
-    IsAdmin,
-    IsAdminOrReadOnly,
-    IsUserOrModeratorOrReadOnly,
-)
+
+from .filters import TitleFilter
+from .mixins import ListCreateDestroyViewSet
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -49,7 +51,7 @@ class UserViewSet(viewsets.ModelViewSet):
         url_name='me',
         permission_classes=(IsAuthenticated,)
     )
-    def get_patch_me(self, request):
+    def me(self, request):
         if request.method == 'PATCH':
             serializer = self.get_serializer(
                 request.user,
@@ -63,34 +65,24 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class SignUpViewSet(
-    mixins.CreateModelMixin,
-    viewsets.GenericViewSet,
-):
-    """Вьюсет для SignUp"""
-
-    queryset = User.objects.all()
-    serializer_class = SignUpSerializer
-    permission_classes = (AllowAny,)
-    authentication_classes = ([])
-
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get("username")
-        email = serializer.validated_data.get("email")
-        user, _ = User.objects.get_or_create(username=username, email=email)
-        user = User.objects.get(username=username)
-        confirmation_code = default_token_generator.make_token(user)
-        send_mail(
-            subject='регистрация в api_yandb',
-            message=f'confirmation_code: {confirmation_code}'
-                    f' for {user.username}',
-            from_email='from@example.com',
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    serializer = SignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    username = serializer.validated_data.get("username")
+    email = serializer.validated_data.get("email")
+    user, _ = User.objects.get_or_create(username=username, email=email)
+    confirmation_code = default_token_generator.make_token(user)
+    send_mail(
+        subject='регистрация в api_yandb',
+        message=f'confirmation_code: {confirmation_code}'
+                f' for {user.username}',
+        from_email=settings.EMAILFROM,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TokenViewSet(

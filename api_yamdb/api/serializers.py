@@ -1,4 +1,5 @@
-from django.db.models import Q
+
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -97,13 +98,6 @@ class UserSerializer(serializers.ModelSerializer):
             'role'
         )
 
-        def validate_username(self, username):
-            if username == 'me':
-                raise serializers.ValidationError(
-                    'Имя me зарезервировано системой'
-                )
-            return username
-
 
 class SignUpSerializer(serializers.Serializer):
     """Сериализатор для создания учетки"""
@@ -123,18 +117,19 @@ class SignUpSerializer(serializers.Serializer):
         if data['username'] == 'me':
             raise serializers.ValidationError(
                 'Имя me зарезервировано системой')
-        check_email = User.objects.filter(email=data.get('email'))
-        check_user = User.objects.filter(username=data.get('username'))
-        test_pair_of_user_and_mail = User.objects.filter(
-            Q(email=data.get('email')) & Q(username=data.get('username'))
-        )
+        check_email = User.objects.filter(
+            email=data.get('email').lower()
+        ).exists()
+        check_user = User.objects.filter(
+            username=data.get('username').lower()
+        ).exists()
         if (check_email and not check_user):
             raise serializers.ValidationError(
                 'Адрес электронной почты занят'
             )
 
         if check_user:
-            if not test_pair_of_user_and_mail:
+            if not (check_email and check_user):
                 raise serializers.ValidationError(
                     'Неверный адрес  электронной почты'
                 )
