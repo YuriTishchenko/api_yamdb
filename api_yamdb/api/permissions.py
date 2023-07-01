@@ -1,5 +1,4 @@
 from rest_framework import permissions
-from reviews.constants import ADMIN, MODERATOR
 
 
 class IsUserOrModeratorOrReadOnly(permissions.BasePermission):
@@ -19,8 +18,8 @@ class IsUserOrModeratorOrReadOnly(permissions.BasePermission):
             request.method in permissions.SAFE_METHODS
             or obj.author == request.user
             or request.user.is_superuser
-            or request.user.role == MODERATOR
-            or request.user.role == ADMIN
+            or request.user.is_moderator
+            or request.user.is_admin
         )
 
 
@@ -40,7 +39,7 @@ class IsUserOrAdminOrReadOnly(permissions.BasePermission):
             request.method in permissions.SAFE_METHODS
             or obj.author == request.user
             or request.user.is_superuser
-            or request.user.role == ADMIN
+            or request.user.is_admin
         )
 
 
@@ -52,7 +51,7 @@ class IsAdmin(permissions.BasePermission):
             request.user.is_authenticated
             and (
                 request.user.is_superuser
-                or request.user.role == ADMIN
+                or request.user.is_admin
             )
         )
 
@@ -63,5 +62,5 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return (request.method in permissions.SAFE_METHODS
                 or (request.user.is_authenticated and (
-                    request.user.role == ADMIN
+                    request.user.is_admin
                     or request.user.is_superuser)))

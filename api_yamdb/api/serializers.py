@@ -1,4 +1,3 @@
-from django.db.models import Avg, Q
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -32,33 +31,22 @@ class TitleSerializer(serializers.ModelSerializer):
         slug_field='slug',
         queryset=Categorie.objects.all()
     )
-    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description', 'genre',
+        fields = ('id', 'name', 'year', 'description', 'genre',
                   'category')
-
-    def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score'))['score__avg']
-        if rating is not None:
-            return round(rating)
 
 
 class ReadOnlyTitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
-    genre = GenreSerializer(many=True)
-    category = CategorySerializer()
+    rating = serializers.IntegerField(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Title
-        fields = (
-            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
-        )
-
-    def get_rating(self, obj):
-        serializer = TitleSerializer(obj)
-        return serializer.data['rating']
+        fields = '__all__'
+        read_only_fields = ('__all__',)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -73,10 +61,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         exclude = ('title',)
 
     def validate(self, data):
-        if (
-            self.context['request'].method == 'PUT'
-            or self.context['request'].method == 'PATCH'
-        ):
+        if self.context['request'].method != 'POST':
             return data
         elif Review.objects.filter(
             author=self.context['request'].user,
@@ -111,13 +96,6 @@ class UserSerializer(serializers.ModelSerializer):
             'role'
         )
 
-        def validate_username(self, username):
-            if username == 'me':
-                raise serializers.ValidationError(
-                    'Имя me зарезервировано системой'
-                )
-            return username
-
 
 class SignUpSerializer(serializers.Serializer):
     """Сериализатор для создания учетки"""
@@ -137,20 +115,21 @@ class SignUpSerializer(serializers.Serializer):
         if data['username'] == 'me':
             raise serializers.ValidationError(
                 'Имя me зарезервировано системой')
-        check_email = User.objects.filter(email=data.get('email'))
-        check_user = User.objects.filter(username=data.get('username'))
-        test_pair_of_user_and_mail = User.objects.filter(
-            Q(email=data.get('email')) & Q(username=data.get('username'))
-        )
+        check_email = User.objects.filter(
+            email=data.get('email').lower()
+        ).exists()
+        check_user = User.objects.filter(
+            username=data.get('username').lower()
+        ).exists()
         if (check_email and not check_user):
             raise serializers.ValidationError(
                 'Адрес электронной почты занят'
             )
-
-        if check_user and not test_pair_of_user_and_mail:
-            raise serializers.ValidationError(
-                'Неверный адрес  электронной почты'
-            )
+        if check_user:
+            if not (check_email and check_user):
+                raise serializers.ValidationError(
+                    'Неверный адрес  электронной почты'
+                )
         return data
 
 
