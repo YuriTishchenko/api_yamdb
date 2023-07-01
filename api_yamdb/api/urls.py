@@ -6,7 +6,7 @@ from api.views import (
     TitleViewSet,
     UserViewSet,
     signup,
-    TokenViewSet,
+    create,
 )
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -53,7 +53,7 @@ urlpatterns = [
     ),
     path(
         'v1/auth/token/',
-        TokenViewSet.as_view({'post': 'create'}),
+        create,
         name='token'
     )
 ]

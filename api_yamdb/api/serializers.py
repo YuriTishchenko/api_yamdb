@@ -39,9 +39,9 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class ReadOnlyTitleSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField()
-    genre = GenreSerializer(many=True)
-    category = CategorySerializer()
+    rating = serializers.IntegerField(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Title
@@ -125,7 +125,6 @@ class SignUpSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Адрес электронной почты занят'
             )
-
         if check_user:
             if not (check_email and check_user):
                 raise serializers.ValidationError(
