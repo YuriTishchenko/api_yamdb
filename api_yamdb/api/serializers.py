@@ -125,7 +125,6 @@ class SignUpSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Адрес электронной почты занят'
             )
-
         if check_user:
             if not (check_email and check_user):
                 raise serializers.ValidationError(
