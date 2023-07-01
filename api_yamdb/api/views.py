@@ -4,7 +4,7 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, status, mixins, filters
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -59,7 +59,10 @@ class UserViewSet(viewsets.ModelViewSet):
                 partial=True,
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save(role=request.user.role)
+            serializer.save(
+                role=request.user.role,
+                partial=True,
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = self.get_serializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -85,28 +88,19 @@ def signup(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TokenViewSet(
-    mixins.CreateModelMixin,
-    viewsets.GenericViewSet
-):
-    """Вьюсет для токенов"""
-
-    queryset = User.objects.all()
-    serializer_class = TokenSerializer
-    permission_classes = (AllowAny,)
-    authentication_classes = ([])
-
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get('username')
-        confirmation_code = serializer.validated_data.get('confirmation_code')
-        user = get_object_or_404(User, username=username)
-        if not default_token_generator.check_token(user, confirmation_code):
-            message = {'confirmation_code': 'Неверный confirmation_code'}
-            return Response(message, status=status.HTTP_400_BAD_REQUEST)
-        message = {'token': str(AccessToken.for_user(user))}
-        return Response(message, status=status.HTTP_200_OK)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create(request):
+    serializer = TokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    username = serializer.validated_data.get('username')
+    confirmation_code = serializer.validated_data.get('confirmation_code')
+    user = get_object_or_404(User, username=username)
+    if not default_token_generator.check_token(user, confirmation_code):
+        message = {'confirmation_code': 'Неверный confirmation_code'}
+        return Response(message, status=status.HTTP_400_BAD_REQUEST)
+    message = {'token': str(AccessToken.for_user(user))}
+    return Response(message, status=status.HTTP_200_OK)
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
@@ -128,7 +122,9 @@ class GenreViewSet(ListCreateDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(rating=Avg('reviews__score')).order_by('name')
+    queryset = Title.objects.all().annotate(
+        rating=Avg('reviews__score')
+    ).order_by('name')
     permission_classes = (IsAdminOrReadOnly,)
     serializer_class = TitleSerializer
     filterset_class = TitleFilter
@@ -165,4 +161,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, reviews=self.get_review())
 
     def get_review(self):
-        return get_object_or_404(Review, id=self.kwargs.get('review_id'), title=self.kwargs.get('title_id'))
+        return get_object_or_404(
+            Review, id=self.kwargs.get('review_id'),
+            title=self.kwargs.get('title_id')
+        )

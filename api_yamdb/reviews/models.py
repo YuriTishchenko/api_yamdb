@@ -5,13 +5,20 @@ from django.core.validators import (
     RegexValidator
 )
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-from reviews.constants import ADMIN, NUMBER_OF_CHARS, MODERATOR, ROLES, USER
+from reviews.constants import NUMBER_OF_CHARS
 from reviews.validators import validate_year
 
 
 class User(AbstractUser):
     """Модель класса User унаследованная от AbstractUser"""
+
+    class Role(models.TextChoices):
+        USER = 'user', _('Пользователь')
+        MODERATOR = 'moderator', _('Модератор')
+        ADMIN = 'admin', _('Администратор')
+        SUPERUSER = 'superuser', _('Суперюзер')
 
     username = models.CharField(
         max_length=150,
@@ -31,8 +38,8 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=40,
         verbose_name='Роль',
-        choices=ROLES,
-        default=USER,
+        choices=Role.choices,
+        default=Role.USER,
     )
 
     class Meta:
@@ -42,11 +49,11 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == ADMIN
+        return self.role == self.Role.ADMIN
 
     @property
     def is_moderator(self):
-        return self.role == MODERATOR
+        return self.role == self.Role.MODERATOR
 
 
 class Categorie(models.Model):
@@ -137,7 +144,7 @@ class Review(models.Model):
         related_name='reviews',
         verbose_name='произведение'
     )
-    score = models.IntegerField(
+    score = models.SmallIntegerField(
         'оценка',
         validators=[
             MinValueValidator(1, message='Оценка должна быть не меньше 1'),
