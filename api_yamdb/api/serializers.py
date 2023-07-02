@@ -121,15 +121,10 @@ class SignUpSerializer(serializers.Serializer):
         check_user = User.objects.filter(
             username=data.get('username').lower()
         ).exists()
-        if (check_email and not check_user):
+        if check_email ^ check_user:
             raise serializers.ValidationError(
-                'Адрес электронной почты занят'
+                'Неверный адрес  электронной почты'
             )
-        if check_user:
-            if not (check_email and check_user):
-                raise serializers.ValidationError(
-                    'Неверный адрес  электронной почты'
-                )
         return data
 
 

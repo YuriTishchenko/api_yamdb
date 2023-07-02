@@ -16,7 +16,6 @@ from api.permissions import (
     IsAdminOrReadOnly,
     IsUserOrModeratorOrReadOnly,
 )
-from reviews.models import Categorie, Genre, Review, Title
 from reviews.models import Categorie, Genre, Review, Title, User
 from api.serializers import (
     CategorySerializer,
@@ -73,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
 def signup(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get("username")
+    username = serializer.validated_data.get('username')
     email = serializer.validated_data.get("email")
     user, _ = User.objects.get_or_create(username=username, email=email)
     confirmation_code = default_token_generator.make_token(user)
