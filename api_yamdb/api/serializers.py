@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 
@@ -121,9 +122,19 @@ class SignUpSerializer(serializers.Serializer):
         check_user = User.objects.filter(
             username=data.get('username').lower()
         ).exists()
-        if check_email ^ check_user:
+        test_pair_of_user_and_mail = User.objects.filter(
+            Q(email=data.get('email').lower())
+            & Q(username=data.get('username').lower())
+        ).exists()
+        if test_pair_of_user_and_mail:
+            return data
+        if not check_email and check_user:
             raise serializers.ValidationError(
                 'Неверный адрес  электронной почты'
+            )
+        if check_email:
+            raise serializers.ValidationError(
+                'Электронной почты занят'
             )
         return data
 
